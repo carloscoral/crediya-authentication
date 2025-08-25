@@ -4,11 +4,15 @@ import com.carloscoral.model.user.User;
 import com.carloscoral.model.user.gateways.UserRepository;
 import com.carloscoral.r2dbc.entity.UserEntity;
 import com.carloscoral.r2dbc.helper.ReactiveAdapterOperations;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 @Repository
+@Slf4j
 public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         User,
         UserEntity,
@@ -25,7 +29,14 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     }
 
     @Override
-    public Mono<Void> saveUser(User user) {
-        return this.save(user).thenEmpty(Mono.empty());
+    public Mono<User> saveUser(User user) {
+        UserEntity userEntity = mapper.mapBuilder(user, UserEntity.UserEntityBuilder.class).build();
+        return repository.save(userEntity).map(entity -> mapper.mapBuilder(entity, User.UserBuilder.class).build());
+    }
+
+    @Override
+    public Mono<User> findExistentUser(String email, String identification) {
+        return repository.findByEmailOrIdentification(email, identification)
+            .map(entity -> mapper.mapBuilder(entity, User.UserBuilder.class).build());
     }
 }

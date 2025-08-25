@@ -25,12 +25,12 @@ class UserReactiveRepositoryAdapterTest {
     ObjectMapper mapper;
 
     void mustSaveValue() {
-        User user = new User();
+        User user = User.builder().build();
         UserEntity userEntity = new UserEntity();
         when(repository.save(userEntity)).thenReturn(Mono.just(userEntity));
         when(mapper.map(user, User.class)).thenReturn(user);
 
-        Mono<Void> result = repositoryAdapter.saveUser(user);
+        Mono<User> result = repositoryAdapter.saveUser(user);
 
         // TODO Fix tests
         StepVerifier.create(result)
