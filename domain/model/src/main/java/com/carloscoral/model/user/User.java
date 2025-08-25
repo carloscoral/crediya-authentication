@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -14,7 +14,7 @@ import java.util.Date;
 public class User {
     String firstName;
     String lastName;
-    Date birthday;
+    LocalDate birthday;
     String address;
     String email;
     String identification;

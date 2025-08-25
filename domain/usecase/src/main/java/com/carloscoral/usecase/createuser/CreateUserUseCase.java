@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 public class CreateUserUseCase {
     private final UserRepository userRepository;
 
-    Mono<Void> execute(User user) {
+    public Mono<Void> execute(User user) {
         return userRepository.saveUser(user);
     }
 }
