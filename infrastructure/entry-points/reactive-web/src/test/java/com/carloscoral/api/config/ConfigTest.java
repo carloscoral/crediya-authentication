@@ -1,26 +1,38 @@
 package com.carloscoral.api.config;
 
-import com.carloscoral.api.UserHandler;
-import com.carloscoral.api.UserRouterRest;
+import com.carloscoral.api.UserController;
+import com.carloscoral.api.UserService;
+import com.carloscoral.api.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@ContextConfiguration(classes = {UserRouterRest.class, UserHandler.class})
+@ContextConfiguration(classes = {UserController.class, GlobalExceptionHandler.class})
 @WebFluxTest
-@Import({CorsConfig.class, SecurityHeadersConfig.class})
+@Import({CorsConfig.class, SecurityHeadersConfig.class, ConfigTest.TestConfig.class})
 class ConfigTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        UserService userService() {
+            return org.mockito.Mockito.mock(UserService.class);
+        }
+    }
+
     @Test
     void corsConfigurationShouldAllowOrigins() {
-        webTestClient.get()
-                .uri("/api/usecase/path")
+        webTestClient.options()
+                .uri("/api/v1/users")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Content-Security-Policy",
