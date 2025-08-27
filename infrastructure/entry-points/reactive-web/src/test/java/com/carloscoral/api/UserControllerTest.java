@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -270,4 +271,59 @@ class UserControllerTest {
                 .jsonPath("$.data").doesNotExist()
                 .jsonPath("$.errors").doesNotExist();
     }
+
+    @Test
+    void shouldReturnBadRequestForInvalidJsonFormat() {
+        String invalidJsonBody = """
+                {
+                  "firstName": "Carlos",
+                  "lastName": "Coral",
+                  "birthday": "1990-05-15",
+                  "address": "Calle 123 #45-67, Bogotá",
+                  "email": "carlos.coral@example.com"
+                  "identification": "123456789"
+                }
+                """;
+
+        webTestClient.post()
+                .uri("/api/v1/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidJsonBody)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.message").isEqualTo("Invalid JSON format in request body")
+                .jsonPath("$.data").doesNotExist()
+                .jsonPath("$.errors").doesNotExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestForMalformedJson() {
+        String malformedJsonBody = """
+                {
+                  "firstName": "Carlos",
+                  "lastName": "Coral",
+                  "birthday": "1990-05-15",
+                  "address": "Calle 123 #45-67, Bogotá",
+                  "email": "carlos.coral@example.com",
+                  "identification": "123456789"
+                """;
+
+        webTestClient.post()
+                .uri("/api/v1/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(malformedJsonBody)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.message").isEqualTo("Invalid JSON format in request body")
+                .jsonPath("$.data").doesNotExist()
+                .jsonPath("$.errors").doesNotExist();
+    }
+
+
 }
