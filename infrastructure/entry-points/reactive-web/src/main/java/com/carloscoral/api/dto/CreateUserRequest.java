@@ -45,6 +45,6 @@ public class CreateUserRequest {
 
     @NotNull(message = "Base salary is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Base salary must be greater than 0")
-    @DecimalMax(value = "999999999.99", message = "Base salary cannot exceed 999,999,999.99")
+    @DecimalMax(value = "15000000.00", message = "Base salary cannot exceed 15000000.00")
     private BigDecimal baseSalary;
 }
