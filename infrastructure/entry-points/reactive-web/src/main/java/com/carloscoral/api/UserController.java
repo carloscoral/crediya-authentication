@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,76 +31,74 @@ public class UserController {
             description = "Creates a new user in the system.",
             operationId = "createUser"
     )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201",
-                    description = "User created successfully",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiResponse.class),
-                            examples = @ExampleObject(
-                                    name = "Success Response",
-                                    value = """
-                                            {
-                                              "success": true,
-                                              "message": "User created successfully"
-                                            }"""
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "Validation errors in request body",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiResponse.class),
-                            examples = @ExampleObject(
-                                    name = "Validation Error",
-                                    value = """
-                                            {
-                                              "success": false,
-                                              "message": "Validation failed",
-                                              "errors": [
-                                                "Email is required",
-                                                "First name must be between 2 and 50 characters"
-                                              ]
-                                            }"""
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "409",
-                    description = "User already exists with provided email or identification",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiResponse.class),
-                            examples = @ExampleObject(
-                                    name = "Duplicate User",
-                                    value = """
-                                            {
-                                              "success": false,
-                                              "message": "User already exists"
-                                            }"""
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiResponse.class),
-                            examples = @ExampleObject(
-                                    name = "Server Error",
-                                    value = """
-                                            {
-                                              "success": false,
-                                              "message": "Internal server error occurred"
-                                            }"""
-                            )
-                    )
-            )
-    })
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "User created successfully",
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = @Schema(implementation = ApiResponse.class),
+                        examples = @ExampleObject(
+                                name = "Success Response",
+                                value = """
+                                        {
+                                        "success": true,
+                                        "message": "User created successfully"
+                                        }"""
+                        )
+                )
+        )
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "Validation errors in request body",
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = @Schema(implementation = ApiResponse.class),
+                        examples = @ExampleObject(
+                                name = "Validation Error",
+                                value = """
+                                        {
+                                        "success": false,
+                                        "message": "Validation failed",
+                                        "errors": [
+                                        "Email is required",
+                                        "First name must be between 2 and 50 characters"
+                                        ]
+                                        }"""
+                        )
+                )
+        )
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "409",
+                description = "User already exists with provided email or identification",
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = @Schema(implementation = ApiResponse.class),
+                        examples = @ExampleObject(
+                                name = "Duplicate User",
+                                value = """
+                                        {
+                                        "success": false,
+                                        "message": "User already exists"
+                                        }"""
+                        )
+                )
+        )
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "500",
+                description = "Internal server error",
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = @Schema(implementation = ApiResponse.class),
+                        examples = @ExampleObject(
+                                name = "Server Error",
+                                value = """
+                                        {
+                                        "success": false,
+                                        "message": "Internal server error occurred"
+                                        }"""
+                        )
+                )
+        )
     @RequestBody(
             description = "User information to create the account",
             required = true,
