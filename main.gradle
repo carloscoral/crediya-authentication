@@ -81,6 +81,31 @@ subprojects {
         }
     }
 
+    jacocoTestCoverageVerification {
+        dependsOn jacocoTestReport
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.90
+                }
+                limit {
+                    counter = 'BRANCH'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.90
+                }
+                limit {
+                    counter = 'INSTRUCTION'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.90
+                }
+            }
+        }
+    }
+
+    check.dependsOn jacocoTestCoverageVerification
+
 }
 
 jacoco {
