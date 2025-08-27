@@ -8,6 +8,7 @@ import com.carloscoral.r2dbc.helper.ReactiveAdapterOperations;
 import lombok.extern.slf4j.Slf4j;
 
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
@@ -28,6 +29,7 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         super(repository, mapper, d -> mapper.map(d, User.class));
     }
 
+    @Transactional
     @Override
     public Mono<User> saveUser(User user) {
         UserEntity userEntity = mapper.mapBuilder(user, UserEntity.UserEntityBuilder.class).build();
