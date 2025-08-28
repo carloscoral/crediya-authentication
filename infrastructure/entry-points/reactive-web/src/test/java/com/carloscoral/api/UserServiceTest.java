@@ -7,6 +7,7 @@ import com.carloscoral.api.validation.GenericValidator;
 import com.carloscoral.model.user.User;
 import com.carloscoral.usecase.createuser.CreateUserUseCase;
 import com.carloscoral.usecase.exception.DuplicateUserException;
+import com.carloscoral.usecase.validateuser.ValidateUserUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class UserServiceTest {
 
     @Mock
     private CreateUserUseCase createUserUseCase;
+
+    @Mock
+    private ValidateUserUseCase validateUserUseCase;
 
     @Mock
     private UserMapper userMapper;
@@ -182,7 +186,7 @@ class UserServiceTest {
 
     @Test
     void shouldCreateInstanceWithCorrectDependencies() {
-        UserService service = new UserService(createUserUseCase, userMapper, validator);
+        UserService service = new UserService(createUserUseCase, validateUserUseCase, userMapper, validator);
 
         assert service != null;
     }

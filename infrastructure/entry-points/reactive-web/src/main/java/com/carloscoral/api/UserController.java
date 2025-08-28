@@ -2,6 +2,7 @@ package com.carloscoral.api;
 
 import com.carloscoral.api.dto.ApiResponse;
 import com.carloscoral.api.dto.CreateUserRequest;
+import com.carloscoral.api.dto.ValidateUserRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -127,5 +128,16 @@ public class UserController {
         return userService.createUser(request)
                 .map(message -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(message)));
+    }
+
+    @GetMapping("/validate")
+    public Mono<ResponseEntity<ApiResponse<Boolean>>> validateUser(@org.springframework.web.bind.annotation.RequestParam("email") String email) {
+        ValidateUserRequest request = ValidateUserRequest.builder()
+                .email(email)
+                .build();
+        
+        return userService.validateUser(request)
+                .map(userExists -> ResponseEntity.ok()
+                        .body(ApiResponse.success("User validated", userExists)));
     }
 }

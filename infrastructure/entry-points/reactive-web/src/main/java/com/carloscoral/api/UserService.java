@@ -1,11 +1,13 @@
 package com.carloscoral.api;
 
 import com.carloscoral.api.dto.CreateUserRequest;
+import com.carloscoral.api.dto.ValidateUserRequest;
 import com.carloscoral.api.exception.ValidationException;
 import com.carloscoral.api.mapper.UserMapper;
 import com.carloscoral.api.validation.GenericValidator;
 import com.carloscoral.usecase.createuser.CreateUserUseCase;
 
+import com.carloscoral.usecase.validateuser.ValidateUserUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.List;
 public class UserService {
     
     private final CreateUserUseCase createUserUseCase;
+    private final ValidateUserUseCase validateUserUseCase;
     private final UserMapper userMapper;
     private final GenericValidator validator;
 
@@ -34,5 +37,18 @@ public class UserService {
                 .map(userMapper::toUser)
                 .flatMap(createUserUseCase::execute)
                 .then(Mono.just("User created successfully"));
+    }
+
+    public Mono<Boolean> validateUser(ValidateUserRequest request) {
+        if (request == null) {
+            return Mono.error(new ValidationException("Request params are required",
+                    List.of("request: Request params cannot be empty")));
+        }
+
+        return Mono.just(request)
+                .doOnNext(dto -> log.debug("Validating user: {}", dto))
+                .flatMap(validator::validate)
+                .map(ValidateUserRequest::getEmail)
+                .flatMap(validateUserUseCase::byEmail);
     }
 }
