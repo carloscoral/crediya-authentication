@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +132,71 @@ public class UserController {
     }
 
     @GetMapping("/validate")
-    public Mono<ResponseEntity<ApiResponse<Boolean>>> validateUser(@org.springframework.web.bind.annotation.RequestParam("email") String email) {
+    @Operation(
+            summary = "Validate if user exists",
+            description = "Validate if a user exists using its email",
+            operationId = "validateUser"
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "User validated successfully",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ApiResponse.class),
+                    examples = @ExampleObject(
+                            name = "Success Response",
+                            value = """
+                                        {
+                                        "success": true,
+                                        "message": "User validated",
+                                        "data": true
+                                        }"""
+                    )
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "Validation errors in request params",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ApiResponse.class),
+                    examples = @ExampleObject(
+                            name = "Validation Error",
+                            value = """
+                                        {
+                                        "success": false,
+                                        "message": "Validation failed",
+                                        "errors": [
+                                        "Email is required"
+                                        ]
+                                        }"""
+                    )
+            )
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ApiResponse.class),
+                    examples = @ExampleObject(
+                            name = "Server Error",
+                            value = """
+                                        {
+                                        "success": false,
+                                        "message": "Internal server error occurred"
+                                        }"""
+                    )
+            )
+    )
+    public Mono<ResponseEntity<ApiResponse<Boolean>>> validateUser(
+            @Parameter(
+                    description = "User's email address to validate",
+                    required = true,
+                    example = "carlos.coral@example.com",
+                    schema = @Schema(type = "string", format = "email")
+            )
+            @org.springframework.web.bind.annotation.RequestParam("email") String email) {
         ValidateUserRequest request = ValidateUserRequest.builder()
                 .email(email)
                 .build();
