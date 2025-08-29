@@ -1,6 +1,7 @@
 package com.carloscoral.api;
 
 import com.carloscoral.api.dto.CreateUserRequest;
+import com.carloscoral.api.dto.ValidateUserRequest;
 import com.carloscoral.api.exception.GlobalExceptionHandler;
 import com.carloscoral.api.exception.ValidationException;
 import com.carloscoral.usecase.exception.DuplicateUserException;
@@ -20,6 +21,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -325,5 +328,162 @@ class UserControllerTest {
                 .jsonPath("$.errors").doesNotExist();
     }
 
+    @Test
+    void shouldValidateUserSuccessfullyWhenUserExists() {
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.just(true));
 
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=carlos.coral@example.com")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.message").isEqualTo("User validated")
+                .jsonPath("$.data").isEqualTo(true)
+                .jsonPath("$.errors").doesNotExist();
+    }
+
+    @Test
+    void shouldValidateUserSuccessfullyWhenUserDoesNotExist() {
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.just(false));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=nonexistent@example.com")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.message").isEqualTo("User validated")
+                .jsonPath("$.data").isEqualTo(false)
+                .jsonPath("$.errors").doesNotExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidEmailInValidateUser() {
+        List<String> validationErrors = List.of("email: Email format is not valid");
+        ValidationException validationException = new ValidationException("Validation failed", validationErrors);
+
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.error(validationException));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=invalid-email")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.message").isEqualTo("Validation failed")
+                .jsonPath("$.errors").isArray()
+                .jsonPath("$.errors[0]").isEqualTo("email: Email format is not valid")
+                .jsonPath("$.data").doesNotExist();
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenEmailParameterIsMissing() {
+        webTestClient.get()
+                .uri("/api/v1/users/validate")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void shouldReturnBadRequestForEmptyEmailInValidateUser() {
+        List<String> validationErrors = List.of("email: Email is required");
+        ValidationException validationException = new ValidationException("Validation failed", validationErrors);
+
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.error(validationException));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.message").isEqualTo("Validation failed")
+                .jsonPath("$.errors").isArray()
+                .jsonPath("$.errors[0]").isEqualTo("email: Email is required")
+                .jsonPath("$.data").doesNotExist();
+    }
+
+    @Test
+    void shouldHandleServiceErrorForValidateUser() {
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.error(new RuntimeException("Database connection failed")));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=carlos.coral@example.com")
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.message").isEqualTo("Internal server error occurred")
+                .jsonPath("$.data").doesNotExist()
+                .jsonPath("$.errors").doesNotExist();
+    }
+
+    @Test
+    void shouldValidateUserWithDifferentValidEmails() {
+        String[] validEmails = {
+                "test@example.com",
+                "user.name@domain.co",
+                "email+tag@test.org"
+        };
+
+        for (String email : validEmails) {
+            when(userService.validateUser(any(ValidateUserRequest.class)))
+                    .thenReturn(Mono.just(true));
+
+            webTestClient.get()
+                    .uri("/api/v1/users/validate?email=" + email)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.success").isEqualTo(true)
+                    .jsonPath("$.message").isEqualTo("User validated")
+                    .jsonPath("$.data").isEqualTo(true)
+                    .jsonPath("$.errors").doesNotExist();
+        }
+    }
+
+    @Test
+    void shouldCallValidateUserServiceWithCorrectRequest() {
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.just(true));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=carlos.coral@example.com")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(userService).validateUser(argThat(request -> 
+            request instanceof ValidateUserRequest && 
+            "carlos.coral@example.com".equals(((ValidateUserRequest) request).getEmail())
+        ));
+    }
+
+    @Test
+    void shouldHandleSpecialCharactersInEmailForValidateUser() {
+        when(userService.validateUser(any(ValidateUserRequest.class)))
+                .thenReturn(Mono.just(false));
+
+        webTestClient.get()
+                .uri("/api/v1/users/validate?email=user%2Btest@domain-name.co.uk")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.message").isEqualTo("User validated")
+                .jsonPath("$.data").isEqualTo(false)
+                .jsonPath("$.errors").doesNotExist();
+    }
 }

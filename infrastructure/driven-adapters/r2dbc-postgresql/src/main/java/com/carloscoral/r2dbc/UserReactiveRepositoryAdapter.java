@@ -8,6 +8,7 @@ import com.carloscoral.r2dbc.helper.ReactiveAdapterOperations;
 import lombok.extern.slf4j.Slf4j;
 
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.data.domain.Example;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -40,5 +41,12 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     public Mono<User> findExistentUser(String email, String identification) {
         return repository.findByEmailOrIdentification(email, identification)
             .map(entity -> mapper.mapBuilder(entity, User.UserBuilder.class).build());
+    }
+
+    @Override
+    public Mono<User> findByEmail(String email) {
+        UserEntity user = UserEntity.builder().email(email).build();
+        return repository.findOne(Example.of(user))
+                .map(u -> mapper.mapBuilder(u, User.UserBuilder.class).build());
     }
 }

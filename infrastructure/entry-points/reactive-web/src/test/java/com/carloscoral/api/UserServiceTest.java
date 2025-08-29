@@ -1,12 +1,14 @@
 package com.carloscoral.api;
 
 import com.carloscoral.api.dto.CreateUserRequest;
+import com.carloscoral.api.dto.ValidateUserRequest;
 import com.carloscoral.api.exception.ValidationException;
 import com.carloscoral.api.mapper.UserMapper;
 import com.carloscoral.api.validation.GenericValidator;
 import com.carloscoral.model.user.User;
 import com.carloscoral.usecase.createuser.CreateUserUseCase;
 import com.carloscoral.usecase.exception.DuplicateUserException;
+import com.carloscoral.usecase.validateuser.ValidateUserUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,12 +35,16 @@ class UserServiceTest {
     private CreateUserUseCase createUserUseCase;
 
     @Mock
+    private ValidateUserUseCase validateUserUseCase;
+
+    @Mock
     private UserMapper userMapper;
 
     @Mock
     private GenericValidator validator;
 
     private CreateUserRequest validRequest;
+    private ValidateUserRequest validValidateRequest;
     private User user;
 
     @BeforeEach
@@ -52,6 +58,10 @@ class UserServiceTest {
                 .identification("123456789")
                 .phone("+573001234567")
                 .baseSalary(new BigDecimal("5000000"))
+                .build();
+
+        validValidateRequest = ValidateUserRequest.builder()
+                .email("carlos.coral@example.com")
                 .build();
 
         user = User.builder()
@@ -182,7 +192,7 @@ class UserServiceTest {
 
     @Test
     void shouldCreateInstanceWithCorrectDependencies() {
-        UserService service = new UserService(createUserUseCase, userMapper, validator);
+        UserService service = new UserService(createUserUseCase, validateUserUseCase, userMapper, validator);
 
         assert service != null;
     }
@@ -262,5 +272,117 @@ class UserServiceTest {
         verify(validator).validate(minimalRequest);
         verify(userMapper).toUser(minimalRequest);
         verify(createUserUseCase).execute(minimalUser);
+    }
+
+    @Test
+    void shouldValidateUserSuccessfullyWhenUserExists() {
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.just(validValidateRequest));
+        when(validateUserUseCase.byEmail(anyString())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(userService.validateUser(validValidateRequest))
+                .expectNext(true)
+                .verifyComplete();
+
+        verify(validator).validate(validValidateRequest);
+        verify(validateUserUseCase).byEmail("carlos.coral@example.com");
+    }
+
+    @Test
+    void shouldValidateUserSuccessfullyWhenUserDoesNotExist() {
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.just(validValidateRequest));
+        when(validateUserUseCase.byEmail(anyString())).thenReturn(Mono.just(false));
+
+        StepVerifier.create(userService.validateUser(validValidateRequest))
+                .expectNext(false)
+                .verifyComplete();
+
+        verify(validator).validate(validValidateRequest);
+        verify(validateUserUseCase).byEmail("carlos.coral@example.com");
+    }
+
+    @Test
+    void shouldReturnErrorWhenValidateRequestIsNull() {
+        StepVerifier.create(userService.validateUser(null))
+                .expectErrorMatches(throwable -> {
+                    if (throwable instanceof ValidationException) {
+                        ValidationException ve = (ValidationException) throwable;
+                        return "Request params are required".equals(ve.getMessage()) &&
+                                ve.getValidationErrors().contains("request: Request params cannot be empty");
+                    }
+                    return false;
+                })
+                .verify();
+
+        verify(validator, never()).validate(any(ValidateUserRequest.class));
+        verify(validateUserUseCase, never()).byEmail(any());
+    }
+
+    @Test
+    void shouldHandleValidationErrorForValidateUser() {
+        List<String> errors = List.of("email: Email format is not valid");
+        ValidationException validationException = new ValidationException("Validation failed", errors);
+
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.error(validationException));
+
+        StepVerifier.create(userService.validateUser(validValidateRequest))
+                .expectErrorMatches(throwable -> {
+                    if (throwable instanceof ValidationException) {
+                        ValidationException ve = (ValidationException) throwable;
+                        return "Validation failed".equals(ve.getMessage()) &&
+                                ve.getValidationErrors().equals(errors);
+                    }
+                    return false;
+                })
+                .verify();
+
+        verify(validator).validate(validValidateRequest);
+        verify(validateUserUseCase, never()).byEmail(any());
+    }
+
+    @Test
+    void shouldHandleUseCaseErrorForValidateUser() {
+        RuntimeException useCaseException = new RuntimeException("Database connection error");
+
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.just(validValidateRequest));
+        when(validateUserUseCase.byEmail(anyString())).thenReturn(Mono.error(useCaseException));
+
+        StepVerifier.create(userService.validateUser(validValidateRequest))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verify(validator).validate(validValidateRequest);
+        verify(validateUserUseCase).byEmail("carlos.coral@example.com");
+    }
+
+    @Test
+    void shouldValidateUserWithDifferentEmail() {
+        ValidateUserRequest customRequest = ValidateUserRequest.builder()
+                .email("different@example.com")
+                .build();
+
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.just(customRequest));
+        when(validateUserUseCase.byEmail(anyString())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(userService.validateUser(customRequest))
+                .expectNext(true)
+                .verifyComplete();
+
+        verify(validator).validate(customRequest);
+        verify(validateUserUseCase).byEmail("different@example.com");
+    }
+
+    @Test
+    void shouldCallValidateUserDependenciesInCorrectOrder() {
+        when(validator.validate(any(ValidateUserRequest.class))).thenReturn(Mono.just(validValidateRequest));
+        when(validateUserUseCase.byEmail(anyString())).thenReturn(Mono.just(true));
+
+        StepVerifier.create(userService.validateUser(validValidateRequest))
+                .expectNext(true)
+                .verifyComplete();
+
+        var inOrder = inOrder(validator, validateUserUseCase);
+        inOrder.verify(validator).validate(validValidateRequest);
+        inOrder.verify(validateUserUseCase).byEmail("carlos.coral@example.com");
+        inOrder.verifyNoMoreInteractions();
     }
 }
