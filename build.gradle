@@ -6,6 +6,8 @@ buildscript {
 		jacocoVersion = '0.8.13'
 		pitestVersion = '1.19.0-rc.1'
         lombokVersion = '1.18.38'
+        mapstructVersion = '1.6.3'
+        springdocVersion = '2.8.11'
 	}
 }
 
@@ -15,6 +17,7 @@ plugins {
 	id 'info.solidsoft.pitest' version "${pitestVersion}" apply false
 	id 'org.sonarqube' version "${sonarVersion}"
 	id 'jacoco'
+	id 'org.flywaydb.flyway' version '11.11.2' apply false
 }
 
 sonar {

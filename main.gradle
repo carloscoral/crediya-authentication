@@ -81,6 +81,12 @@ subprojects {
         }
     }
 
+    jacocoTestCoverageVerification {
+        dependsOn jacocoTestReport
+    }
+
+    check.dependsOn jacocoTestCoverageVerification
+
 }
 
 jacoco {
@@ -98,6 +104,24 @@ tasks.register('jacocoMergedReport', JacocoReport) {
         xml.setRequired true
         csv.setRequired false
         html.setRequired true
+    }
+}
+
+tasks.register('jacocoMergedTestCoverageVerification', JacocoCoverageVerification) {
+    dependsOn = [test, subprojects.jacocoTestReport, pitestReportAggregate]
+    additionalSourceDirs.setFrom files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.setFrom files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.setFrom files(subprojects.sourceSets.main.output)
+    executionData.setFrom project.fileTree(dir: '.', include: '**/build/jacoco/test.exec')
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+        }
     }
 }
 
